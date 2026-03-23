@@ -60,24 +60,28 @@ export const ProgressProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     // DB Sync & Reconciliation
     useEffect(() => {
         const reconcileProgress = async () => {
-            if (!user?.id) {
-                console.log("Progress Sync: No user, skipping reconciliation.");
-                setIsLoaded(true);
-                return;
-            }
-
-            console.log("Progress Sync: Initializing reconciliation for", user.id);
-
             // 1. Load what we have in LocalStorage as a baseline
             let currentLocal: UserProgress = { modules: {}, points: 0, badges: [], certificateEarned: false };
-            const savedProgress = localStorage.getItem(`dme_progress_${user.id}`);
-            if (savedProgress) {
-                try {
-                    currentLocal = JSON.parse(savedProgress);
-                    console.log("Progress Sync: Baseline loaded from LocalStorage.");
-                } catch (e) {
-                    console.error("Progress Sync: Failed to parse LocalStorage baseline", e);
+            if (user?.id) {
+                const savedProgress = localStorage.getItem(`dme_progress_${user.id}`);
+                if (savedProgress) {
+                    try {
+                        currentLocal = JSON.parse(savedProgress);
+                        console.log("Progress Sync: Baseline loaded from LocalStorage.");
+                    } catch (e) {
+                        console.error("Progress Sync: Failed to parse LocalStorage baseline", e);
+                    }
                 }
+            }
+
+            const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+            const isMockMode = !url || url.includes('your-project') || url === '';
+
+            if (isMockMode) {
+                console.log("Progress Sync: Mock mode detected, skipping API reconciliation.");
+                setProgress(currentLocal);
+                setIsLoaded(true);
+                return;
             }
 
             try {
@@ -293,7 +297,10 @@ export const ProgressProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
             // Async DB Sync (performed as a side effect outside of functional update)
             setTimeout(async () => {
-                const canSave = user?.id && isLoaded;
+                const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+                const isMockMode = !url || url.includes('your-project') || url === '';
+                
+                const canSave = user?.id && isLoaded && !isMockMode;
                 if (canSave) {
                     setSyncStatus('syncing');
                     console.log("Progress Sync: Saving to API...", { moduleId, updates });

@@ -5,8 +5,11 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
-import { Phone, MapPin, Search, Shield, Heart, Users, Download } from 'lucide-react';
+import { Phone, MapPin, Search, Shield, Heart, Users, Download, Flame, Wind, AlertTriangle } from 'lucide-react';
 import { supabase } from '@/lib/supabase-client';
+import { db } from '@/lib/firebase-client';
+import { ref, onValue } from 'firebase/database';
+import { motion, AnimatePresence } from 'framer-motion';
 
 interface EmergencyContact {
     id: string;
@@ -28,6 +31,7 @@ const FALLBACK_CONTACTS: EmergencyContact[] = [
 
 export default function EmergencyPage() {
     const [contacts, setContacts] = useState<EmergencyContact[]>(FALLBACK_CONTACTS);
+    const [hardwareAlerts, setHardwareAlerts] = useState({ fire: false, smoke: false, vibration: 0 });
     const [search, setSearch] = useState('');
     const [loading, setLoading] = useState(true);
 
@@ -43,6 +47,21 @@ export default function EmergencyPage() {
             }
         }
         fetchContacts();
+
+        // Firebase Realtime Hardware Alerts
+        const alertsRef = ref(db, 'hardware/sensors');
+        const unsubscribe = onValue(alertsRef, (snapshot) => {
+            const data = snapshot.val();
+            if (data) {
+                setHardwareAlerts({
+                    fire: !!data.isFire,
+                    smoke: !!data.isSmoke,
+                    vibration: data.vibrationCount || 0
+                });
+            }
+        });
+
+        return () => unsubscribe();
     }, []);
 
     const filtered = contacts.filter(c =>
@@ -66,6 +85,51 @@ export default function EmergencyPage() {
                     </div>
                 </CardContent>
             </Card>
+
+            <AnimatePresence>
+                {(hardwareAlerts.fire || hardwareAlerts.smoke || hardwareAlerts.vibration > 5) && (
+                    <motion.div
+                        initial={{ height: 0, opacity: 0 }}
+                        animate={{ height: 'auto', opacity: 1 }}
+                        exit={{ height: 0, opacity: 0 }}
+                        className="mb-8 space-y-4 overflow-hidden"
+                    >
+                        {hardwareAlerts.fire && (
+                            <Card className="border-red-500 bg-red-500/10 animate-pulse">
+                                <CardContent className="p-4 flex items-center gap-4 text-red-500">
+                                    <Flame className="h-8 w-8" />
+                                    <div>
+                                        <h3 className="font-black text-lg">CRITICAL: FIRE DETECTED</h3>
+                                        <p className="text-sm opacity-90">Evacuate immediately! All relays have been automatic shut down.</p>
+                                    </div>
+                                </CardContent>
+                            </Card>
+                        )}
+                        {hardwareAlerts.smoke && (
+                            <Card className="border-orange-500 bg-orange-500/10">
+                                <CardContent className="p-4 flex items-center gap-4 text-orange-500">
+                                    <Wind className="h-8 w-8" />
+                                    <div>
+                                        <h3 className="font-black text-lg">ALERT: SMOKE DETECTED</h3>
+                                        <p className="text-sm opacity-90">Immediate ventilation active. Check for source of smoke.</p>
+                                    </div>
+                                </CardContent>
+                            </Card>
+                        )}
+                        {hardwareAlerts.vibration > 5 && (
+                            <Card className="border-purple-500 bg-purple-500/10">
+                                <CardContent className="p-4 flex items-center gap-4 text-purple-500">
+                                    <AlertTriangle className="h-8 w-8" />
+                                    <div>
+                                        <h3 className="font-black text-lg">ALERT: SEISMIC ACTIVITY</h3>
+                                        <p className="text-sm opacity-90">Significant vibration detected ({hardwareAlerts.vibration} events). Move to safety zone.</p>
+                                    </div>
+                                </CardContent>
+                            </Card>
+                        )}
+                    </motion.div>
+                )}
+            </AnimatePresence>
 
             <div className="relative mb-8">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />

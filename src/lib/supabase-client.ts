@@ -31,6 +31,12 @@ export const supabase = isBrowser
                     eq: async () => ({ error: null }),
                 }),
             }),
+            channel: () => ({
+                on: () => ({
+                    subscribe: () => ({ })
+                })
+            }),
+            removeChannel: () => { }
         } as any)
         : createBrowserClient(url, anonKey, {
             auth: {

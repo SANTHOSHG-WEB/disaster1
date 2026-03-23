@@ -112,7 +112,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                         if (session?.user) {
                             await Promise.all([
                                 fetchUserProfile(session.user.id),
-                                fetchUserRole(session.user.id, session.user.email)
+                                fetchUserRole(session.user.id, session.user.email),
+                                updateProfileActivity(session.user.id)
                             ]);
                         }
                     } else if (event === 'SIGNED_OUT') {
@@ -166,6 +167,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 setUserRole({ role: 'student' });
             }
         }
+    };
+
+    const updateProfileActivity = async (userId: string) => {
+        const isMockMode = process.env.NEXT_PUBLIC_SUPABASE_URL?.includes('your-project');
+        if (isMockMode) return;
+        
+        await supabase
+            .from('profiles')
+            .update({ updated_at: new Date().toISOString() })
+            .eq('user_id', userId);
     };
 
     const login = async (email: string, password: string) => {
@@ -244,7 +255,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 // Fetch and update state BEFORE returning, so the next page has the data
                 await Promise.all([
                     fetchUserProfile(signedInUser.id),
-                    fetchUserRole(signedInUser.id, signedInUser.email)
+                    fetchUserRole(signedInUser.id, signedInUser.email),
+                    updateProfileActivity(signedInUser.id)
                 ]);
             }
 
@@ -338,7 +350,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 // Ensure profile/role are fetched (or created via trigger) before moving on
                 await Promise.all([
                     fetchUserProfile(signedUpUser.id),
-                    fetchUserRole(signedUpUser.id, signedUpUser.email)
+                    fetchUserRole(signedUpUser.id, signedUpUser.email),
+                    updateProfileActivity(signedUpUser.id)
                 ]);
             }
 

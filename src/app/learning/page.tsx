@@ -127,6 +127,11 @@ export default function Learning() {
                                 <div className="flex items-center gap-4 text-xs text-muted-foreground">
                                     <div className="flex items-center gap-1"><Clock className="h-3 w-3" /> {module.duration}</div>
                                     <div className="flex items-center gap-1"><Video className="h-3 w-3" /> Video + Quiz</div>
+                                    {isCompleted && modProgress?.score !== undefined && (
+                                        <div className="flex items-center gap-1 text-emerald-400 font-bold ml-auto">
+                                            <Star className="h-3 w-3 fill-emerald-400" /> Score: {modProgress.score}%
+                                        </div>
+                                    )}
                                 </div>
 
                                 {isAccessible && (
