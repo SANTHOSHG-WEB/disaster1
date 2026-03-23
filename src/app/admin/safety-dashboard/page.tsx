@@ -1,6 +1,9 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
+ 
+export const dynamic = 'force-dynamic';
+ 
 import { db } from '@/lib/firebase-client';
 import { ref, onValue, set } from 'firebase/database';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';

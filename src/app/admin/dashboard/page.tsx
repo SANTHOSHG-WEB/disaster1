@@ -9,7 +9,9 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Users, BookOpen, AlertTriangle, Activity, Loader2, Download, Table as TableIcon } from 'lucide-react';
 import { modules } from '@/data/modules';
-
+ 
+export const dynamic = 'force-dynamic';
+ 
 interface StudentData {
     id: string;
     name: string;
