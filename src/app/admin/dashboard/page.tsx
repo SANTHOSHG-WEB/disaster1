@@ -3,8 +3,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/lib/supabase-client';
-import { db } from '@/lib/firebase-client';
-import { ref, onValue } from 'firebase/database';
+import { db, ref, onValue } from '@/lib/firebase-client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Users, BookOpen, AlertTriangle, Activity, Loader2, Download, Table as TableIcon } from 'lucide-react';

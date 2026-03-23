@@ -1,5 +1,14 @@
-import { initializeApp, getApps, getApp } from "firebase/app";
-import { getDatabase } from "firebase/database";
+import { 
+    initializeApp, 
+    getApps, 
+    getApp 
+} from "firebase/app";
+import { 
+    getDatabase, 
+    ref as firebaseRef, 
+    onValue as firebaseOnValue, 
+    set as firebaseSet 
+} from "firebase/database";
 
 const firebaseConfig = {
     apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
@@ -12,25 +21,42 @@ const firebaseConfig = {
 };
 
 const isBrowser = typeof window !== 'undefined';
-const hasConfig = firebaseConfig.projectId && firebaseConfig.databaseURL;
+const hasConfig = !!firebaseConfig.projectId && !!firebaseConfig.databaseURL;
 
-let db: any;
+let database: any = null;
 
 if (isBrowser && hasConfig) {
-    const app = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);
-    db = getDatabase(app);
-} else {
-    // Return a proxy/mock for SSR or missing config to prevent build crashes
-    db = {
-        ref: () => ({
-            onValue: () => () => {},
-            off: () => {},
-            once: async () => ({ val: () => null }),
-            set: async () => {},
-            update: async () => {},
-            push: () => ({ key: 'mock-key' }),
-        })
-    };
+    try {
+        const app = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);
+        database = getDatabase(app);
+    } catch (e) {
+        console.error("Firebase Initialization Error:", e);
+    }
 }
 
-export { db };
+// Wrapper for ref
+export const ref = (db: any, path: string) => {
+    if (db && hasConfig) return firebaseRef(db, path);
+    return { _isMock: true, path };
+};
+
+// Wrapper for onValue
+export const onValue = (ref: any, callback: (snapshot: any) => void) => {
+    if (ref && !ref._isMock) return firebaseOnValue(ref, callback);
+    
+    // Mock snapshot
+    callback({
+        val: () => null,
+        exists: () => false
+    });
+    return () => {}; // No-op unsubscribe
+};
+
+// Wrapper for set (if used)
+export const set = (ref: any, value: any) => {
+    if (ref && !ref._isMock) return firebaseSet(ref, value);
+    console.warn("Firebase: Skipping 'set' operation in Mock Mode (Missing Config)");
+    return Promise.resolve();
+};
+
+export { database as db };

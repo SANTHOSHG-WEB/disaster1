@@ -10,8 +10,7 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Phone, MapPin, Search, Shield, Heart, Users, Download, Flame, Wind, AlertTriangle } from 'lucide-react';
 import { supabase } from '@/lib/supabase-client';
-import { db } from '@/lib/firebase-client';
-import { ref, onValue } from 'firebase/database';
+import { db, ref, onValue } from '@/lib/firebase-client';
 import { motion, AnimatePresence } from 'framer-motion';
 
 interface EmergencyContact {
